@@ -1,0 +1,137 @@
+# -----------------------------------------------------------------------------
+# AI Assistant Backend API Requests
+# Base URL: https://adeebjamal-private-ai-backend.hf.space
+# 
+# Note: Since the Hugging Face Space is Public, these APIs can be called
+# directly without needing an Authorization header.
+# -----------------------------------------------------------------------------
+
+# 1. Health Check
+# Returns the health status of the server.
+curl --location 'https://adeebjamal-private-ai-backend.hf.space/health'
+
+# Example Response:
+# {
+#     "status": "healthy"
+# }
+
+
+# -----------------------------------------------------------------------------
+
+# 2. List All Conversations
+# Returns a list of all chat topics with their IDs and message counts.
+curl --location 'https://adeebjamal-private-ai-backend.hf.space/conversations'
+
+# Example Response:
+# {
+#     "conversations": [
+#         {
+#             "id": 1,
+#             "title": "My First Chat",
+#             "created_at": "2026-04-20T21:52:29.230613",
+#             "message_count": 5
+#         }
+#     ]
+# }
+
+
+# -----------------------------------------------------------------------------
+
+# 3. Create a New Conversation
+# Creates a new chat topic. You will need the returned "id" for subsequent requests.
+curl --location 'https://adeebjamal-private-ai-backend.hf.space/conversations/create' \
+--header 'Content-Type: application/json' \
+--data '{
+    "title": "<REPLACE_WITH_CHAT_TITLE>"
+}'
+
+# Example Response:
+# {
+#     "id": 2,
+#     "title": "React Project",
+#     "created_at": "2026-04-21T17:09:16.741250"
+# }
+
+
+# -----------------------------------------------------------------------------
+
+# 4. Ask a Question (Generate AI Response)
+# Sends a message to the AI. It fetches the conversation history automatically.
+# Uses --max-time 300 to prevent the client from timing out during long generations.
+curl --max-time 300 --location 'https://adeebjamal-private-ai-backend.hf.space/conversations/ask' \
+--header 'Content-Type: application/json' \
+--data '{
+    "conversation_id": <REPLACE_WITH_CONVERSATION_ID>,
+    "query": "<REPLACE_WITH_YOUR_QUESTION_HERE>",
+    "max_tokens": 500
+}'
+
+# Example Response:
+# {
+#     "conversation_id": 2,
+#     "user_query": "What is React?",
+#     "response": "React is a popular JavaScript library for building user interfaces."
+# }
+
+
+# -----------------------------------------------------------------------------
+
+# 5. Load Chat History (Paginated)
+# Returns the history of messages for a specific conversation.
+curl --location 'https://adeebjamal-private-ai-backend.hf.space/conversations/messages' \
+--header 'Content-Type: application/json' \
+--data '{
+    "conversation_id": <REPLACE_WITH_CONVERSATION_ID>,
+    "start_row": 1,
+    "end_row": 50
+}'
+
+# Example Response:
+# {
+#     "conversation_id": 2,
+#     "conversation_title": "React Project",
+#     "start_row": 1,
+#     "end_row": 50,
+#     "total_messages": 1,
+#     "messages": [
+#         {
+#             "id": 1,
+#             "user_query": "What is React?",
+#             "response": "React is a popular JavaScript library for building user interfaces.",
+#             "created_at": "2026-04-21T17:15:00.000000"
+#         }
+#     ]
+# }
+
+# 6. Rename a Conversation
+# Updates the title of an existing conversation.
+curl --location --request PUT 'https://adeebjamal-private-ai-backend.hf.space/conversations/rename' \
+--header 'Content-Type: application/json' \
+--data '{
+    "conversation_id": <REPLACE_WITH_CONVERSATION_ID>,
+    "new_name": "<REPLACE_WITH_NEW_NAME>"
+}'
+
+# Example Response:
+# {
+#     "id": 2,
+#     "title": "Updated Chat Title",
+#     "created_at": "2026-04-21T17:09:16.741250"
+# }
+
+
+# -----------------------------------------------------------------------------
+
+# 7. Delete a Conversation
+# Deletes a conversation and all its associated messages permanently.
+curl --location --request DELETE 'https://adeebjamal-private-ai-backend.hf.space/conversations/delete' \
+--header 'Content-Type: application/json' \
+--data '{
+    "conversation_id": <REPLACE_WITH_CONVERSATION_ID>
+}'
+
+# Example Response:
+# {
+#     "message": "Conversation deleted successfully",
+#     "deleted_id": 2
+# }
