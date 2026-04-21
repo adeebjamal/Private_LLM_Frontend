@@ -80,6 +80,7 @@ export const ChatInput: React.FC<Props> = ({ onSendMessage, isLoading }) => {
           }}
         />
         <button
+          className="send-btn"
           type="submit"
           disabled={!canSend}
           style={{

@@ -3,7 +3,7 @@ import { getMessages, askQuestion } from '../api';
 import type { Message } from '../api';
 import { MessageBubble } from './MessageBubble';
 import { ChatInput } from './ChatInput';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Bot } from 'lucide-react';
 
 interface Props {
   conversationId: number | null;
@@ -169,17 +169,43 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
 
         {isLoading && !isFetchingHistory && messages.length > 0 && (
           <div
+            className="msg-ai"
             style={{
               display: 'flex',
+              alignItems: 'flex-end',
               gap: '8px',
-              alignItems: 'center',
-              color: 'var(--text-tertiary)',
               padding: '8px 0',
-              fontSize: '0.85rem',
             }}
           >
-            <Loader2 size={16} style={{ animation: 'spin 1.5s linear infinite' }} />
-            <span>Thinking…</span>
+            <div
+              style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '50%',
+                background: 'var(--bubble-ai-bg)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--text-secondary)',
+                flexShrink: 0,
+              }}
+            >
+              <Bot size={14} strokeWidth={2.2} />
+            </div>
+            <div
+              style={{
+                padding: '14px 18px',
+                background: 'var(--bubble-ai-bg)',
+                borderRadius: '18px 18px 18px 4px',
+                display: 'flex',
+                gap: '5px',
+                alignItems: 'center',
+              }}
+            >
+              <span className="thinking-dot" />
+              <span className="thinking-dot" />
+              <span className="thinking-dot" />
+            </div>
           </div>
         )}
 

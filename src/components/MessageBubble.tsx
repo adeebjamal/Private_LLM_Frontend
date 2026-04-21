@@ -11,7 +11,7 @@ export const MessageBubble: React.FC<Props> = ({ message }) => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
       {/* User Query */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end', gap: '8px' }}>
+      <div className="msg-user" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end', gap: '8px' }}>
         <div
           style={{
             maxWidth: '75%',
@@ -44,7 +44,7 @@ export const MessageBubble: React.FC<Props> = ({ message }) => {
 
       {/* AI Response */}
       {message.response && (
-        <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-end', gap: '8px' }}>
+        <div className="msg-ai" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-end', gap: '8px' }}>
           <div
             style={{
               width: '28px',

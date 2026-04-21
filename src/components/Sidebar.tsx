@@ -110,11 +110,13 @@ export const Sidebar: React.FC<Props> = ({
       >
         {/* Header */}
         <div
+          className="sidebar-header"
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '16px 16px 12px',
+            transition: 'padding 0.3s ease',
           }}
         >
           <h1
@@ -174,7 +176,7 @@ export const Sidebar: React.FC<Props> = ({
               const isActive = activeConversationId === conv.id;
 
               return (
-                <div key={conv.id} style={{ position: 'relative' }}>
+                <div key={conv.id} className="conv-item" style={{ position: 'relative' }}>
                   <button
                     onClick={() => {
                       onSelectConversation(conv.id);
@@ -250,6 +252,7 @@ export const Sidebar: React.FC<Props> = ({
                   {menuOpenId === conv.id && (
                     <div
                       ref={menuRef}
+                      className="dropdown-menu"
                       style={{
                         position: 'absolute',
                         right: '8px',
@@ -263,7 +266,6 @@ export const Sidebar: React.FC<Props> = ({
                         borderRadius: '8px',
                         boxShadow: 'var(--shadow-md)',
                         padding: '4px',
-                        animation: 'fadeIn 0.1s ease',
                       }}
                     >
                       <button

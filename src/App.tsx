@@ -133,9 +133,13 @@ function App() {
             .sidebar-container {
               position: absolute !important;
               transform: translateX(-100%);
+              transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1) !important;
             }
             .sidebar-container.open {
               transform: translateX(0);
+            }
+            .sidebar-header {
+              padding-top: 52px !important;
             }
           }
         `}
