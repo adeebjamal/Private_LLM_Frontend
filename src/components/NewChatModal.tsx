@@ -58,6 +58,7 @@ export const NewChatModal: React.FC<Props> = ({ isOpen, isCreating, onClose, onC
           position: 'relative',
           width: '100%',
           maxWidth: '340px',
+          backgroundColor: 'var(--modal-bg-solid)',
           background: 'var(--modal-bg)',
           backdropFilter: 'saturate(180%) blur(20px)',
           WebkitBackdropFilter: 'saturate(180%) blur(20px)',

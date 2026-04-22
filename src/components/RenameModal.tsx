@@ -62,6 +62,7 @@ export const RenameModal: React.FC<Props> = ({ isOpen, currentName, onClose, onR
           position: 'relative',
           width: '100%',
           maxWidth: '340px',
+          backgroundColor: 'var(--modal-bg-solid)',
           background: 'var(--modal-bg)',
           backdropFilter: 'saturate(180%) blur(20px)',
           WebkitBackdropFilter: 'saturate(180%) blur(20px)',

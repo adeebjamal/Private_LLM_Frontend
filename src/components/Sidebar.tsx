@@ -259,6 +259,7 @@ export const Sidebar: React.FC<Props> = ({
                         top: '36px',
                         zIndex: 60,
                         minWidth: '150px',
+                        backgroundColor: 'var(--modal-bg-solid)',
                         background: 'var(--modal-bg)',
                         backdropFilter: 'saturate(180%) blur(20px)',
                         WebkitBackdropFilter: 'saturate(180%) blur(20px)',

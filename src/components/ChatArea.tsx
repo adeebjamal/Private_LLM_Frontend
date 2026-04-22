@@ -1,5 +1,11 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { getMessages, askQuestion } from '../api';
+import {
+  getMessages,
+  submitQuestion,
+  startTaskPolling,
+  getTasksForConversation,
+  clearTask,
+} from '../api';
 import type { Message } from '../api';
 import { MessageBubble } from './MessageBubble';
 import { ChatInput } from './ChatInput';
@@ -54,21 +60,108 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
       } catch (error) {
         console.error('Error fetching messages:', error);
       } finally {
-        setIsLoading(false);
+        if (isInitial) setIsLoading(false);
         setIsFetchingHistory(false);
       }
     },
     [conversationId]
   );
 
+  // -----------------------------------------------------------------------
+  // On conversation switch: fetch messages, then restore any pending tasks
+  // -----------------------------------------------------------------------
   useEffect(() => {
-    if (conversationId) {
-      setMessages([]);
-      setCurrentRow(1);
-      setHasMore(true);
-      fetchMessages(1, true);
-    }
+    if (!conversationId) return;
+
+    setMessages([]);
+    setCurrentRow(1);
+    setHasMore(true);
+
+    fetchMessages(1, true).then(() => {
+      const tasks = getTasksForConversation(conversationId);
+      for (const task of tasks) {
+        if (task.status === 'completed' && task.result) {
+          // Backend already saved to DB — the fetch above should include it.
+          // But in case of a race, inject it and clear.
+          setMessages((prev) => {
+            if (prev.some((m) => m.user_query === task.query && m.response)) return prev;
+            return [
+              ...prev,
+              {
+                id: task.tempMessageId,
+                user_query: task.query,
+                response: task.result!.response,
+                created_at: new Date().toISOString(),
+              },
+            ];
+          });
+          clearTask(task.taskId);
+          setTimeout(() => scrollToBottom(), 100);
+        } else if (task.status === 'failed') {
+          clearTask(task.taskId);
+        } else if (task.status === 'polling') {
+          // Still waiting — re-add the temporary message with thinking dots
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === task.tempMessageId)) return prev;
+            return [
+              ...prev,
+              {
+                id: task.tempMessageId,
+                user_query: task.query,
+                response: '',
+                created_at: new Date().toISOString(),
+              },
+            ];
+          });
+          setIsLoading(true);
+          setTimeout(() => scrollToBottom(), 100);
+        }
+      }
+    });
   }, [conversationId, fetchMessages]);
+
+  // -----------------------------------------------------------------------
+  // Lightweight local checker — every 2 s, looks at the module-level task
+  // store (no network calls) and applies completed / failed results.
+  // -----------------------------------------------------------------------
+  useEffect(() => {
+    if (!conversationId) return;
+
+    const interval = setInterval(() => {
+      const tasks = getTasksForConversation(conversationId);
+      let hasPending = false;
+
+      for (const task of tasks) {
+        if (task.status === 'completed' && task.result) {
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === task.tempMessageId
+                ? { ...msg, response: task.result!.response }
+                : msg
+            )
+          );
+          clearTask(task.taskId);
+          setTimeout(() => scrollToBottom(), 100);
+        } else if (task.status === 'failed') {
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === task.tempMessageId
+                ? { ...msg, response: `⚠️ ${task.error || 'Failed to get response.'}` }
+                : msg
+            )
+          );
+          clearTask(task.taskId);
+        } else if (task.status === 'polling') {
+          hasPending = true;
+        }
+      }
+
+      // Only clear loading when there are no more pending tasks
+      if (!hasPending) setIsLoading(false);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [conversationId]);
 
   const handleScroll = () => {
     if (containerRef.current) {
@@ -83,6 +176,9 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // -----------------------------------------------------------------------
+  // Send message — submits to backend, registers background polling
+  // -----------------------------------------------------------------------
   const handleSendMessage = async (query: string) => {
     if (!conversationId) return;
 
@@ -98,16 +194,18 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
     setIsLoading(true);
 
     try {
-      const response = await askQuestion(conversationId, query);
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === tempMessage.id ? { ...msg, response: response.response } : msg
-        )
-      );
-      setTimeout(() => scrollToBottom(), 100);
+      const accepted = await submitQuestion(conversationId, query);
+      // Hand off to the module-level poller (survives unmount / conversation switch)
+      startTaskPolling(accepted.task_id, conversationId, query, tempMessage.id);
     } catch (error) {
       console.error('Error sending message:', error);
-    } finally {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === tempMessage.id
+            ? { ...msg, response: '⚠️ Failed to send message. Please try again.' }
+            : msg
+        )
+      );
       setIsLoading(false);
     }
   };

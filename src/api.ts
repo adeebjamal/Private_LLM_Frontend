@@ -29,6 +29,145 @@ export interface AskResponse {
   response: string;
 }
 
+/** Immediate acknowledgement returned by POST /conversations/ask (HTTP 202) */
+export interface AskAcceptedResponse {
+  status: 'accepted';
+  task_id: string;
+  message: string;
+}
+
+/** Response from GET /conversations/ask/status/{task_id} */
+export interface PollStatusResponse {
+  task_id: string;
+  status: 'processing' | 'completed';
+  message?: string;
+  result?: AskResponse;
+}
+
+// ---------------------------------------------------------------------------
+// Background task tracker — module-level, survives React component lifecycles
+// ---------------------------------------------------------------------------
+
+export interface TrackedTask {
+  taskId: string;
+  conversationId: number;
+  query: string;
+  tempMessageId: number;
+  status: 'polling' | 'completed' | 'failed';
+  result?: AskResponse;
+  error?: string;
+}
+
+const activeTasks = new Map<string, TrackedTask>();
+
+const POLL_INTERVAL_MS = 10_000;  // 10 seconds
+const MAX_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+
+// ---------------------------------------------------------------------------
+// Persistence: Save and Load tasks from localStorage
+// ---------------------------------------------------------------------------
+
+function saveTasksToStorage() {
+  try {
+    const tasksArray = Array.from(activeTasks.values());
+    localStorage.setItem('pulse_active_tasks', JSON.stringify(tasksArray));
+  } catch (e) {
+    console.error('Failed to save tasks to storage', e);
+  }
+}
+
+function loadTasksFromStorage() {
+  try {
+    const saved = localStorage.getItem('pulse_active_tasks');
+    if (saved) {
+      const tasks = JSON.parse(saved) as TrackedTask[];
+      tasks.forEach(t => {
+        activeTasks.set(t.taskId, t);
+        // If it was polling when saved, resume polling
+        if (t.status === 'polling') {
+          resumeTaskPolling(t);
+        }
+      });
+    }
+  } catch (e) {
+    console.error('Failed to load tasks from storage', e);
+  }
+}
+
+/**
+ * Start background polling for a task. Runs independently of React —
+ * keeps polling even if the user switches conversations or minimises the browser.
+ */
+export function startTaskPolling(
+  taskId: string,
+  conversationId: number,
+  query: string,
+  tempMessageId: number,
+): void {
+  const task: TrackedTask = { taskId, conversationId, query, tempMessageId, status: 'polling' };
+  activeTasks.set(taskId, task);
+  saveTasksToStorage();
+
+  runPollingLoop(task, Date.now());
+}
+
+function resumeTaskPolling(task: TrackedTask): void {
+  // We don't know when it started, so we reset the timer for the resume duration
+  runPollingLoop(task, Date.now());
+}
+
+async function runPollingLoop(task: TrackedTask, startTime: number) {
+  const { taskId } = task;
+
+  const poll = async () => {
+    const currentTask = activeTasks.get(taskId);
+    if (!currentTask || currentTask.status !== 'polling') return;
+
+    if (Date.now() - startTime > MAX_TIMEOUT_MS) {
+      activeTasks.set(taskId, { ...currentTask, status: 'failed', error: 'Timed out after 5 minutes.' });
+      saveTasksToStorage();
+      return;
+    }
+
+    try {
+      const resp = await pollTaskStatus(taskId);
+      if (resp.status === 'completed' && resp.result) {
+        activeTasks.set(taskId, { ...currentTask, status: 'completed', result: resp.result });
+        saveTasksToStorage();
+        return;
+      }
+      setTimeout(poll, POLL_INTERVAL_MS);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      // Don't fail immediately on network error, try again
+      console.warn(`Polling error for task ${taskId}:`, msg);
+      setTimeout(poll, POLL_INTERVAL_MS);
+    }
+  };
+
+  setTimeout(poll, POLL_INTERVAL_MS);
+}
+
+// Initial load
+if (typeof window !== 'undefined') {
+  loadTasksFromStorage();
+}
+
+/** Return all tracked tasks for a given conversation. */
+export function getTasksForConversation(conversationId: number): TrackedTask[] {
+  return Array.from(activeTasks.values()).filter(t => t.conversationId === conversationId);
+}
+
+/** Remove a task from the tracker once the UI has consumed its result. */
+export function clearTask(taskId: string): void {
+  activeTasks.delete(taskId);
+  saveTasksToStorage();
+}
+
+// ---------------------------------------------------------------------------
+// API calls
+// ---------------------------------------------------------------------------
+
 export async function getConversations(): Promise<Conversation[]> {
   const response = await fetch(`${BASE_URL}/conversations`);
   if (!response.ok) {
@@ -70,7 +209,11 @@ export async function getMessages(conversationId: number, startRow: number, endR
   return response.json();
 }
 
-export async function askQuestion(conversationId: number, query: string): Promise<AskResponse> {
+/**
+ * Submit a question for background processing.
+ * Returns immediately with a task_id (HTTP 202 Accepted).
+ */
+export async function submitQuestion(conversationId: number, query: string): Promise<AskAcceptedResponse> {
   const response = await fetch(`${BASE_URL}/conversations/ask`, {
     method: 'POST',
     headers: {
@@ -83,7 +226,19 @@ export async function askQuestion(conversationId: number, query: string): Promis
     }),
   });
   if (!response.ok) {
-    throw new Error('Failed to get answer');
+    throw new Error('Failed to submit question');
+  }
+  return response.json();
+}
+
+/**
+ * Poll the status of a submitted question by task_id.
+ */
+export async function pollTaskStatus(taskId: string): Promise<PollStatusResponse> {
+  const response = await fetch(`${BASE_URL}/conversations/ask/status/${taskId}`);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    throw new Error(errorData?.detail || `Task failed (HTTP ${response.status})`);
   }
   return response.json();
 }
