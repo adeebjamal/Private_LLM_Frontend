@@ -172,6 +172,7 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+  const showTypingIndicator = isAILoading && !isInitialLoading && !isFetchingHistory;
 
   // -----------------------------------------------------------------------
   // Send message — submits to backend, registers background polling
@@ -267,7 +268,7 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
           <MessageBubble key={msg.id} message={msg} />
         ))}
 
-        {isAILoading && (
+        {showTypingIndicator && (
           <div
             className="msg-ai"
             style={{
