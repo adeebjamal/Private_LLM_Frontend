@@ -17,8 +17,9 @@ interface Props {
 
 export const ChatArea: React.FC<Props> = ({ conversationId }) => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [isFetchingHistory, setIsFetchingHistory] = useState(false);
+  const [isAILoading, setIsAILoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -30,7 +31,7 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
     async (startRow: number, isInitial: boolean = false) => {
       if (!conversationId) return;
 
-      if (isInitial) setIsLoading(true);
+      if (isInitial) setIsInitialLoading(true);
       else setIsFetchingHistory(true);
 
       try {
@@ -60,7 +61,7 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
       } catch (error) {
         console.error('Error fetching messages:', error);
       } finally {
-        if (isInitial) setIsLoading(false);
+        if (isInitial) setIsInitialLoading(false);
         setIsFetchingHistory(false);
       }
     },
@@ -81,8 +82,6 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
       const tasks = getTasksForConversation(conversationId);
       for (const task of tasks) {
         if (task.status === 'completed' && task.result) {
-          // Backend already saved to DB — the fetch above should include it.
-          // But in case of a race, inject it and clear.
           setMessages((prev) => {
             if (prev.some((m) => m.user_query === task.query && m.response)) return prev;
             return [
@@ -100,7 +99,6 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
         } else if (task.status === 'failed') {
           clearTask(task.taskId);
         } else if (task.status === 'polling') {
-          // Still waiting — re-add the temporary message with thinking dots
           setMessages((prev) => {
             if (prev.some((m) => m.id === task.tempMessageId)) return prev;
             return [
@@ -113,7 +111,7 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
               },
             ];
           });
-          setIsLoading(true);
+          setIsAILoading(true);
           setTimeout(() => scrollToBottom(), 100);
         }
       }
@@ -121,7 +119,7 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
   }, [conversationId, fetchMessages]);
 
   // -----------------------------------------------------------------------
-  // Lightweight local checker — every 2 s, looks at the module-level task
+  // Lightweight local checker — every 1.5 s, looks at the module-level task
   // store (no network calls) and applies completed / failed results.
   // -----------------------------------------------------------------------
   useEffect(() => {
@@ -129,8 +127,7 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
 
     const interval = setInterval(() => {
       const tasks = getTasksForConversation(conversationId);
-      let hasPending = false;
-
+      
       for (const task of tasks) {
         if (task.status === 'completed' && task.result) {
           setMessages((prev) =>
@@ -151,22 +148,22 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
             )
           );
           clearTask(task.taskId);
-        } else if (task.status === 'polling') {
-          hasPending = true;
         }
       }
 
-      // Only clear loading when there are no more pending tasks
-      if (!hasPending) setIsLoading(false);
-    }, 2000);
+      // Sync loading state based on active tasks and current message list
+      const hasPolling = tasks.some(t => t.status === 'polling');
+      const hasEmptyResponse = messages.some(m => m.response === '');
+      setIsAILoading(hasPolling || hasEmptyResponse);
+    }, 1500);
 
     return () => clearInterval(interval);
-  }, [conversationId]);
+  }, [conversationId, messages]);
 
   const handleScroll = () => {
     if (containerRef.current) {
       const { scrollTop } = containerRef.current;
-      if (scrollTop === 0 && hasMore && !isFetchingHistory && !isLoading) {
+      if (scrollTop === 0 && hasMore && !isFetchingHistory && !isInitialLoading) {
         fetchMessages(currentRow);
       }
     }
@@ -191,11 +188,10 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
 
     setMessages((prev) => [...prev, tempMessage]);
     setTimeout(() => scrollToBottom(), 100);
-    setIsLoading(true);
+    setIsAILoading(true);
 
     try {
       const accepted = await submitQuestion(conversationId, query);
-      // Hand off to the module-level poller (survives unmount / conversation switch)
       startTaskPolling(accepted.task_id, conversationId, query, tempMessage.id);
     } catch (error) {
       console.error('Error sending message:', error);
@@ -206,7 +202,7 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
             : msg
         )
       );
-      setIsLoading(false);
+      setIsAILoading(false);
     }
   };
 
@@ -261,11 +257,17 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
           </div>
         )}
 
+        {isInitialLoading && messages.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-tertiary)' }}>
+            <Loader2 size={24} style={{ animation: 'spin 1.5s linear infinite' }} />
+          </div>
+        )}
+
         {messages.map((msg) => (
           <MessageBubble key={msg.id} message={msg} />
         ))}
 
-        {isLoading && !isFetchingHistory && messages.length > 0 && (
+        {isAILoading && (
           <div
             className="msg-ai"
             style={{
@@ -311,7 +313,7 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
       </div>
 
       {/* Input */}
-      <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+      <ChatInput onSendMessage={handleSendMessage} isLoading={isInitialLoading || isAILoading} />
     </div>
   );
 };
