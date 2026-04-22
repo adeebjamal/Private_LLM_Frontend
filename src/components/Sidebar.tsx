@@ -253,20 +253,22 @@ export const Sidebar: React.FC<Props> = ({
                     <div
                       ref={menuRef}
                       className="dropdown-menu"
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
                       style={{
                         position: 'absolute',
                         right: '8px',
                         top: '36px',
-                        zIndex: 60,
-                        minWidth: '150px',
+                        zIndex: 100,
+                        minWidth: '160px',
                         backgroundColor: 'var(--modal-bg-solid)',
                         background: 'var(--modal-bg)',
                         backdropFilter: 'saturate(180%) blur(20px)',
                         WebkitBackdropFilter: 'saturate(180%) blur(20px)',
-                        border: '0.5px solid var(--content-border)',
-                        borderRadius: '8px',
+                        border: '0.5px solid var(--sidebar-border)',
+                        borderRadius: '10px',
                         boxShadow: 'var(--shadow-md)',
-                        padding: '4px',
+                        padding: '5px',
                       }}
                     >
                       <button
@@ -279,19 +281,25 @@ export const Sidebar: React.FC<Props> = ({
                           alignItems: 'center',
                           gap: '8px',
                           width: '100%',
-                          padding: '7px 10px',
+                          padding: '8px 12px',
                           background: 'transparent',
                           border: 'none',
-                          borderRadius: '5px',
+                          borderRadius: '6px',
                           color: 'var(--text-primary)',
-                          fontSize: '12.5px',
+                          fontSize: '13px',
                           cursor: 'pointer',
-                          transition: 'background 0.1s',
+                          transition: 'all 0.15s ease',
                         }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--accent)'; e.currentTarget.style.color = '#fff'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'var(--accent)';
+                          e.currentTarget.style.color = '#fff';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent';
+                          e.currentTarget.style.color = 'var(--text-primary)';
+                        }}
                       >
-                        <Pencil size={13} /> Rename
+                        <Pencil size={14} /> Rename
                       </button>
                       <button
                         onClick={(e) => {
@@ -303,19 +311,25 @@ export const Sidebar: React.FC<Props> = ({
                           alignItems: 'center',
                           gap: '8px',
                           width: '100%',
-                          padding: '7px 10px',
+                          padding: '8px 12px',
                           background: 'transparent',
                           border: 'none',
-                          borderRadius: '5px',
+                          borderRadius: '6px',
                           color: '#ff453a',
-                          fontSize: '12.5px',
+                          fontSize: '13px',
                           cursor: 'pointer',
-                          transition: 'background 0.1s',
+                          transition: 'all 0.15s ease',
                         }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = '#ff453a'; e.currentTarget.style.color = '#fff'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#ff453a'; }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#ff453a';
+                          e.currentTarget.style.color = '#fff';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent';
+                          e.currentTarget.style.color = '#ff453a';
+                        }}
                       >
-                        <Trash2 size={13} /> Delete
+                        <Trash2 size={14} /> Delete
                       </button>
                     </div>
                   )}
