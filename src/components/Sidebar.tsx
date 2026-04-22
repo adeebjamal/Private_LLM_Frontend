@@ -9,7 +9,7 @@ interface Props {
   onSelectConversation: (id: number) => void;
   onNewChatClick: () => void;
   onRenameClick: (conv: Conversation) => void;
-  onDeleteConversation: (id: number) => void;
+  onDeleteConversation: (conv: Conversation) => void;
   isCreating: boolean;
   theme: 'light' | 'dark';
   toggleTheme: () => void;
@@ -31,6 +31,7 @@ export const Sidebar: React.FC<Props> = ({
   setIsOpenMobile,
 }) => {
   const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
+  const [hoveredConversationId, setHoveredConversationId] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu on outside click
@@ -51,9 +52,9 @@ export const Sidebar: React.FC<Props> = ({
     onRenameClick(conv);
   };
 
-  const handleDeleteClick = (id: number) => {
+  const handleDeleteClick = (conv: Conversation) => {
     setMenuOpenId(null);
-    onDeleteConversation(id);
+    onDeleteConversation(conv);
   };
 
   return (
@@ -176,7 +177,16 @@ export const Sidebar: React.FC<Props> = ({
               const isActive = activeConversationId === conv.id;
 
               return (
-                <div key={conv.id} className="conv-item" style={{ position: 'relative' }}>
+                <div
+                  key={conv.id}
+                  className="conv-item"
+                  style={{
+                    position: 'relative',
+                    zIndex: menuOpenId === conv.id ? 120 : 1,
+                  }}
+                  onMouseEnter={() => setHoveredConversationId(conv.id)}
+                  onMouseLeave={() => setHoveredConversationId((prev) => (prev === conv.id ? null : prev))}
+                >
                   <button
                     onClick={() => {
                       onSelectConversation(conv.id);
@@ -187,7 +197,7 @@ export const Sidebar: React.FC<Props> = ({
                       alignItems: 'center',
                       gap: '10px',
                       width: '100%',
-                      padding: '8px 10px',
+                      padding: '8px 36px 8px 10px',
                       backgroundColor: isActive ? 'var(--sidebar-active)' : 'transparent',
                       border: 'none',
                       borderRadius: '6px',
@@ -201,15 +211,9 @@ export const Sidebar: React.FC<Props> = ({
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive) e.currentTarget.style.backgroundColor = 'var(--sidebar-hover)';
-                      const dots = e.currentTarget.querySelector('[data-dots]') as HTMLElement;
-                      if (dots) dots.style.opacity = '1';
                     }}
                     onMouseLeave={(e) => {
                       if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
-                      if (menuOpenId !== conv.id) {
-                        const dots = e.currentTarget.querySelector('[data-dots]') as HTMLElement;
-                        if (dots) dots.style.opacity = '0';
-                      }
                     }}
                   >
                     <MessageSquare size={15} strokeWidth={1.8} style={{ flexShrink: 0, opacity: 0.7 }} />
@@ -224,28 +228,42 @@ export const Sidebar: React.FC<Props> = ({
                       {conv.title}
                     </span>
 
-                    {/* 3-dot menu trigger */}
-                    <span
-                      data-dots=""
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setMenuOpenId(menuOpenId === conv.id ? null : conv.id);
-                      }}
-                      style={{
-                        opacity: menuOpenId === conv.id ? 1 : 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        padding: '2px',
-                        borderRadius: '4px',
-                        transition: 'opacity 0.12s, background 0.12s',
-                        flexShrink: 0,
-                        cursor: 'pointer',
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--sidebar-active)')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                    >
-                      <MoreHorizontal size={15} strokeWidth={1.8} />
-                    </span>
+                  </button>
+                  {/* 3-dot menu trigger lives outside row button to avoid accidental chat switches on mobile/iOS */}
+                  <button
+                    type="button"
+                    data-dots=""
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setMenuOpenId(menuOpenId === conv.id ? null : conv.id);
+                    }}
+                    style={{
+                      position: 'absolute',
+                      right: '8px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      opacity: menuOpenId === conv.id || hoveredConversationId === conv.id ? 1 : 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '24px',
+                      height: '24px',
+                      padding: '0',
+                      borderRadius: '6px',
+                      transition: 'opacity 0.12s, background 0.12s',
+                      cursor: 'pointer',
+                      border: 'none',
+                      background: 'transparent',
+                      color: 'var(--text-secondary)',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--sidebar-active)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    aria-label={`Open menu for ${conv.title}`}
+                    aria-haspopup="menu"
+                    aria-expanded={menuOpenId === conv.id}
+                  >
+                    <MoreHorizontal size={15} strokeWidth={1.8} />
                   </button>
 
                   {/* Dropdown menu */}
@@ -261,11 +279,11 @@ export const Sidebar: React.FC<Props> = ({
                         top: '36px',
                         zIndex: 100,
                         minWidth: '160px',
-                        backgroundColor: 'var(--modal-bg-solid)',
-                        background: 'var(--modal-bg)',
+                        backgroundColor: 'var(--menu-bg-solid)',
+                        background: 'var(--menu-bg)',
                         backdropFilter: 'saturate(180%) blur(20px)',
                         WebkitBackdropFilter: 'saturate(180%) blur(20px)',
-                        border: '0.5px solid var(--sidebar-border)',
+                        border: '1px solid var(--menu-border)',
                         borderRadius: '10px',
                         boxShadow: 'var(--shadow-md)',
                         padding: '5px',
@@ -273,8 +291,13 @@ export const Sidebar: React.FC<Props> = ({
                     >
                       <button
                         onClick={(e) => {
+                          e.preventDefault();
                           e.stopPropagation();
                           handleRenameStart(conv);
+                        }}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
                         }}
                         style={{
                           display: 'flex',
@@ -303,8 +326,13 @@ export const Sidebar: React.FC<Props> = ({
                       </button>
                       <button
                         onClick={(e) => {
+                          e.preventDefault();
                           e.stopPropagation();
-                          handleDeleteClick(conv.id);
+                          handleDeleteClick(conv);
+                        }}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
                         }}
                         style={{
                           display: 'flex',

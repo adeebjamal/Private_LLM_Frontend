@@ -1,33 +1,21 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import { X } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
-  currentName: string;
+  conversationTitle: string;
+  isDeleting: boolean;
   onClose: () => void;
-  onRename: (newName: string) => void;
+  onConfirm: () => void;
 }
 
-export const RenameModal: React.FC<Props> = ({ isOpen, currentName, onClose, onRename }) => {
-  const [name, setName] = useState(currentName);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => {
-        inputRef.current?.focus();
-        inputRef.current?.select();
-      }, 50);
-    }
-  }, [isOpen]);
-
-  const handleSubmit = () => {
-    if (name.trim() && name.trim() !== currentName) {
-      onRename(name.trim());
-    }
-    onClose();
-  };
-
+export const DeleteConfirmModal: React.FC<Props> = ({
+  isOpen,
+  conversationTitle,
+  isDeleting,
+  onClose,
+  onConfirm,
+}) => {
   if (!isOpen) return null;
 
   return (
@@ -38,13 +26,12 @@ export const RenameModal: React.FC<Props> = ({ isOpen, currentName, onClose, onR
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 200,
+        zIndex: 220,
         padding: '20px',
       }}
     >
-      {/* Backdrop */}
       <div
-        onClick={onClose}
+        onClick={isDeleting ? undefined : onClose}
         style={{
           position: 'absolute',
           inset: 0,
@@ -55,12 +42,11 @@ export const RenameModal: React.FC<Props> = ({ isOpen, currentName, onClose, onR
         }}
       />
 
-      {/* Modal */}
       <div
         style={{
           position: 'relative',
           width: '100%',
-          maxWidth: '340px',
+          maxWidth: '360px',
           backgroundColor: 'var(--modal-bg-solid)',
           background: 'var(--modal-bg)',
           backdropFilter: 'saturate(180%) blur(20px)',
@@ -72,9 +58,9 @@ export const RenameModal: React.FC<Props> = ({ isOpen, currentName, onClose, onR
           animation: 'modalIn 0.2s ease-out',
         }}
       >
-        {/* Close */}
         <button
           onClick={onClose}
+          disabled={isDeleting}
           style={{
             position: 'absolute',
             top: '10px',
@@ -82,10 +68,11 @@ export const RenameModal: React.FC<Props> = ({ isOpen, currentName, onClose, onR
             background: 'transparent',
             border: 'none',
             color: 'var(--text-tertiary)',
-            cursor: 'pointer',
+            cursor: isDeleting ? 'default' : 'pointer',
             padding: '4px',
             display: 'flex',
             borderRadius: '4px',
+            opacity: isDeleting ? 0.5 : 1,
           }}
         >
           <X size={16} />
@@ -96,59 +83,31 @@ export const RenameModal: React.FC<Props> = ({ isOpen, currentName, onClose, onR
             fontSize: '0.95rem',
             fontWeight: 600,
             color: 'var(--text-primary)',
-            marginBottom: '4px',
+            marginBottom: '8px',
           }}
         >
-          Rename Conversation
+          Delete Conversation
         </h2>
+
         <p
           style={{
-            fontSize: '0.8rem',
+            fontSize: '0.82rem',
             color: 'var(--text-secondary)',
-            marginBottom: '16px',
+            lineHeight: 1.5,
+            marginBottom: '14px',
           }}
         >
-          Enter a new name for this conversation.
+          Are you sure you want to delete{' '}
+          <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
+            "{conversationTitle}"
+          </span>
+          ? This action cannot be undone.
         </p>
 
-        <input
-          ref={inputRef}
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              handleSubmit();
-            }
-            if (e.key === 'Escape') onClose();
-          }}
-          placeholder="Conversation name"
-          style={{
-            width: '100%',
-            padding: '9px 12px',
-            borderRadius: '8px',
-            border: '0.5px solid var(--input-border)',
-            background: 'var(--input-bg)',
-            color: 'var(--text-primary)',
-            fontSize: '0.88rem',
-            outline: 'none',
-            transition: 'border-color 0.15s, box-shadow 0.15s',
-            boxSizing: 'border-box',
-          }}
-          onFocus={(e) => {
-            e.target.style.borderColor = 'var(--input-focus)';
-            e.target.style.boxShadow = '0 0 0 3px rgba(0,122,255,0.15)';
-          }}
-          onBlur={(e) => {
-            e.target.style.borderColor = 'var(--input-border)';
-            e.target.style.boxShadow = 'none';
-          }}
-        />
-
-        <div style={{ display: 'flex', gap: '8px', marginTop: '14px', justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
           <button
             onClick={onClose}
+            disabled={isDeleting}
             style={{
               padding: '6px 14px',
               borderRadius: '6px',
@@ -157,8 +116,9 @@ export const RenameModal: React.FC<Props> = ({ isOpen, currentName, onClose, onR
               color: 'var(--text-primary)',
               fontSize: '0.82rem',
               fontWeight: 500,
-              cursor: 'pointer',
+              cursor: isDeleting ? 'default' : 'pointer',
               transition: 'background 0.12s',
+              opacity: isDeleting ? 0.6 : 1,
             }}
             onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--sidebar-hover)')}
             onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
@@ -166,21 +126,22 @@ export const RenameModal: React.FC<Props> = ({ isOpen, currentName, onClose, onR
             Cancel
           </button>
           <button
-            onClick={handleSubmit}
-            disabled={!name.trim() || name.trim() === currentName}
+            onClick={onConfirm}
+            disabled={isDeleting}
             style={{
               padding: '6px 14px',
               borderRadius: '6px',
               border: 'none',
-              background: name.trim() && name.trim() !== currentName ? 'var(--accent)' : 'var(--separator)',
-              color: name.trim() && name.trim() !== currentName ? '#fff' : 'var(--text-tertiary)',
+              background: '#ff453a',
+              color: '#fff',
               fontSize: '0.82rem',
               fontWeight: 500,
-              cursor: name.trim() && name.trim() !== currentName ? 'pointer' : 'default',
-              transition: 'background 0.12s',
+              cursor: isDeleting ? 'default' : 'pointer',
+              transition: 'filter 0.12s, opacity 0.12s',
+              opacity: isDeleting ? 0.75 : 1,
             }}
           >
-            Rename
+            {isDeleting ? 'Deleting…' : 'Delete'}
           </button>
         </div>
       </div>

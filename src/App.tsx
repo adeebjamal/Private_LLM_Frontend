@@ -3,6 +3,7 @@ import { Sidebar } from './components/Sidebar';
 import { ChatArea } from './components/ChatArea';
 import { NewChatModal } from './components/NewChatModal';
 import { RenameModal } from './components/RenameModal';
+import { DeleteConfirmModal } from './components/DeleteConfirmModal';
 import { getConversations, createConversation, renameConversation, deleteConversation } from './api';
 import type { Conversation } from './api';
 import './index.css';
@@ -16,6 +17,8 @@ function App() {
 
   // Rename modal state
   const [renameTarget, setRenameTarget] = useState<Conversation | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Conversation | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Theme logic
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -79,16 +82,24 @@ function App() {
     setRenameTarget(null);
   };
 
-  const handleDeleteConversation = async (id: number) => {
+  const handleDeleteConversation = async () => {
+    if (!deleteTarget) return;
+    const id = deleteTarget.id;
+    setIsDeleting(true);
     try {
       await deleteConversation(id);
-      setConversations((prev) => prev.filter((c) => c.id !== id));
-      if (activeConversationId === id) {
-        const remaining = conversations.filter((c) => c.id !== id);
-        setActiveConversationId(remaining.length > 0 ? remaining[0].id : null);
-      }
+      setConversations((prev) => {
+        const remaining = prev.filter((c) => c.id !== id);
+        if (activeConversationId === id) {
+          setActiveConversationId(remaining.length > 0 ? remaining[0].id : null);
+        }
+        return remaining;
+      });
+      setDeleteTarget(null);
     } catch (error) {
       console.error('Failed to delete conversation:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -100,7 +111,7 @@ function App() {
         onSelectConversation={setActiveConversationId}
         onNewChatClick={() => setIsModalOpen(true)}
         onRenameClick={(conv) => setRenameTarget(conv)}
-        onDeleteConversation={handleDeleteConversation}
+        onDeleteConversation={(conv) => setDeleteTarget(conv)}
         isCreating={isCreating}
         theme={theme}
         toggleTheme={toggleTheme}
@@ -117,10 +128,21 @@ function App() {
       />
 
       <RenameModal
+        key={renameTarget?.id ?? 'rename-modal'}
         isOpen={renameTarget !== null}
         currentName={renameTarget?.title || ''}
         onClose={() => setRenameTarget(null)}
         onRename={handleRenameConversation}
+      />
+
+      <DeleteConfirmModal
+        isOpen={deleteTarget !== null}
+        conversationTitle={deleteTarget?.title || ''}
+        isDeleting={isDeleting}
+        onClose={() => {
+          if (!isDeleting) setDeleteTarget(null);
+        }}
+        onConfirm={handleDeleteConversation}
       />
       
       {/* Mobile styling specific overrides */}
