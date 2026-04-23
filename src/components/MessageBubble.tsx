@@ -72,18 +72,21 @@ export const MessageBubble: React.FC<Props> = ({ message }) => {
   };
 
   const copyButtonStyle: React.CSSProperties = {
-    width: '20px',
-    height: '20px',
-    borderRadius: '6px',
-    border: 'none',
-    background: 'transparent',
-    color: 'var(--text-secondary)',
+    width: '22px',
+    height: '22px',
+    borderRadius: '7px',
+    border: '1px solid rgba(255,255,255,0.18)',
+    background: 'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.08) 100%)',
+    color: 'var(--text-primary)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     cursor: 'pointer',
     flexShrink: 0,
-    transition: 'background-color 0.12s ease',
+    transition: 'all 0.16s ease',
+    backdropFilter: 'saturate(180%) blur(10px)',
+    WebkitBackdropFilter: 'saturate(180%) blur(10px)',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.22)',
     position: 'absolute',
     top: '6px',
     right: '6px',
@@ -119,10 +122,16 @@ export const MessageBubble: React.FC<Props> = ({ message }) => {
             title="Copy"
             onTouchStart={() => setHoveredTarget('user')}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--sidebar-hover)';
+              e.currentTarget.style.background =
+                'linear-gradient(180deg, rgba(255,255,255,0.24) 0%, rgba(255,255,255,0.12) 100%)';
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.28)';
+              e.currentTarget.style.transform = 'translateY(-0.5px)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.background =
+                'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.08) 100%)';
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)';
+              e.currentTarget.style.transform = 'translateY(0)';
             }}
           >
             {copiedTarget === 'user' ? <Check size={12} strokeWidth={2.3} /> : <Copy size={12} strokeWidth={2.1} />}
@@ -190,10 +199,16 @@ export const MessageBubble: React.FC<Props> = ({ message }) => {
               title="Copy"
               onTouchStart={() => setHoveredTarget('assistant')}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--sidebar-hover)';
+                e.currentTarget.style.background =
+                  'linear-gradient(180deg, rgba(255,255,255,0.24) 0%, rgba(255,255,255,0.12) 100%)';
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.28)';
+                e.currentTarget.style.transform = 'translateY(-0.5px)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.background =
+                  'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.08) 100%)';
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)';
+                e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
               {copiedTarget === 'assistant' ? <Check size={12} strokeWidth={2.3} /> : <Copy size={12} strokeWidth={2.1} />}
@@ -206,7 +221,7 @@ export const MessageBubble: React.FC<Props> = ({ message }) => {
         <div
           style={{
             position: 'fixed',
-            left: 'calc(260px + (100vw - 260px) / 2)',
+            left: '50%',
             bottom: '88px',
             transform: 'translateX(-50%)',
             padding: '9px 15px',
