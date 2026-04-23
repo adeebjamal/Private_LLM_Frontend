@@ -243,7 +243,7 @@ export const Sidebar: React.FC<Props> = ({
                       right: '8px',
                       top: '50%',
                       transform: 'translateY(-50%)',
-                      opacity: menuOpenId === conv.id || hoveredConversationId === conv.id ? 1 : 0,
+                      opacity: menuOpenId === conv.id || hoveredConversationId === conv.id || isActive ? 1 : 0,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
