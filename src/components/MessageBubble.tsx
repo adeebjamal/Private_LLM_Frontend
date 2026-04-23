@@ -10,15 +10,63 @@ interface Props {
 export const MessageBubble: React.FC<Props> = ({ message }) => {
   const [copiedTarget, setCopiedTarget] = React.useState<'user' | 'assistant' | null>(null);
   const [hoveredTarget, setHoveredTarget] = React.useState<'user' | 'assistant' | null>(null);
+  const [showCopiedToast, setShowCopiedToast] = React.useState(false);
+  const [isTouchDevice, setIsTouchDevice] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setIsTouchDevice(window.matchMedia('(hover: none)').matches);
+  }, []);
+
+  const fallbackCopy = (text: string) => {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    textarea.style.top = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    textarea.setSelectionRange(0, textarea.value.length);
+    const success = document.execCommand('copy');
+    document.body.removeChild(textarea);
+    return success;
+  };
 
   const handleCopy = async (text: string, target: 'user' | 'assistant') => {
     try {
-      await navigator.clipboard.writeText(text);
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const success = fallbackCopy(text);
+        if (!success) throw new Error('Fallback copy failed');
+      }
       setCopiedTarget(target);
+      setShowCopiedToast(true);
       window.setTimeout(() => {
         setCopiedTarget((prev) => (prev === target ? null : prev));
       }, 1200);
+      window.setTimeout(() => {
+        setShowCopiedToast(false);
+      }, 2000);
     } catch (error) {
+      try {
+        const success = fallbackCopy(text);
+        if (success) {
+          setCopiedTarget(target);
+          setShowCopiedToast(true);
+          window.setTimeout(() => {
+            setCopiedTarget((prev) => (prev === target ? null : prev));
+          }, 1200);
+          window.setTimeout(() => {
+            setShowCopiedToast(false);
+          }, 2000);
+          return;
+        }
+      } catch {
+        // Ignore secondary fallback error, log primary copy issue below.
+      }
       console.error('Failed to copy message:', error);
     }
   };
@@ -65,10 +113,11 @@ export const MessageBubble: React.FC<Props> = ({ message }) => {
             onClick={() => handleCopy(message.user_query, 'user')}
             style={{
               ...copyButtonStyle,
-              opacity: copiedTarget === 'user' || hoveredTarget === 'user' ? 1 : 0,
+              opacity: copiedTarget === 'user' || hoveredTarget === 'user' || isTouchDevice ? 1 : 0,
             }}
             aria-label="Copy user message"
             title="Copy"
+            onTouchStart={() => setHoveredTarget('user')}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = 'var(--sidebar-hover)';
             }}
@@ -135,10 +184,11 @@ export const MessageBubble: React.FC<Props> = ({ message }) => {
               onClick={() => handleCopy(message.response, 'assistant')}
               style={{
                 ...copyButtonStyle,
-                opacity: copiedTarget === 'assistant' || hoveredTarget === 'assistant' ? 1 : 0,
+                opacity: copiedTarget === 'assistant' || hoveredTarget === 'assistant' || isTouchDevice ? 1 : 0,
               }}
               aria-label="Copy AI message"
               title="Copy"
+              onTouchStart={() => setHoveredTarget('assistant')}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'var(--sidebar-hover)';
               }}
@@ -150,6 +200,32 @@ export const MessageBubble: React.FC<Props> = ({ message }) => {
             </button>
             <ReactMarkdown>{message.response}</ReactMarkdown>
           </div>
+        </div>
+      )}
+      {showCopiedToast && (
+        <div
+          style={{
+            position: 'fixed',
+            left: 'calc(260px + (100vw - 260px) / 2)',
+            bottom: '88px',
+            transform: 'translateX(-50%)',
+            padding: '9px 15px',
+            borderRadius: '999px',
+            background:
+              'linear-gradient(140deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.10) 45%, rgba(255,255,255,0.05) 100%)',
+            border: '1px solid rgba(255,255,255,0.24)',
+            backdropFilter: 'saturate(230%) blur(32px)',
+            WebkitBackdropFilter: 'saturate(230%) blur(32px)',
+            boxShadow:
+              '0 8px 22px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.40), inset 0 -1px 0 rgba(255,255,255,0.08)',
+            color: 'var(--text-primary)',
+            fontSize: '12px',
+            fontWeight: 500,
+            zIndex: 200,
+            pointerEvents: 'none',
+          }}
+        >
+          Message copied
         </div>
       )}
     </div>
