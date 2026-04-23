@@ -12,19 +12,29 @@ export const MessageBubble: React.FC<Props> = ({ message }) => {
   const [hoveredTarget, setHoveredTarget] = React.useState<'user' | 'assistant' | null>(null);
   const [showCopiedToast, setShowCopiedToast] = React.useState(false);
   const [isTouchDevice, setIsTouchDevice] = React.useState(false);
+  const touchHideTimerRef = React.useRef<number | null>(null);
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
     setIsTouchDevice(window.matchMedia('(hover: none)').matches);
   }, []);
 
+  React.useEffect(() => {
+    return () => {
+      if (touchHideTimerRef.current !== null) {
+        window.clearTimeout(touchHideTimerRef.current);
+      }
+    };
+  }, []);
+
   const fallbackCopy = (text: string) => {
     const textarea = document.createElement('textarea');
     textarea.value = text;
-    textarea.setAttribute('readonly', '');
     textarea.style.position = 'fixed';
     textarea.style.opacity = '0';
     textarea.style.top = '-9999px';
+    textarea.style.left = '-9999px';
+    textarea.style.fontSize = '16px';
     document.body.appendChild(textarea);
     textarea.focus();
     textarea.select();
@@ -32,6 +42,17 @@ export const MessageBubble: React.FC<Props> = ({ message }) => {
     const success = document.execCommand('copy');
     document.body.removeChild(textarea);
     return success;
+  };
+
+  const revealTouchCopyButton = (target: 'user' | 'assistant') => {
+    if (!isTouchDevice) return;
+    setHoveredTarget(target);
+    if (touchHideTimerRef.current !== null) {
+      window.clearTimeout(touchHideTimerRef.current);
+    }
+    touchHideTimerRef.current = window.setTimeout(() => {
+      setHoveredTarget((prev) => (prev === target ? null : prev));
+    }, 2200);
   };
 
   const handleCopy = async (text: string, target: 'user' | 'assistant') => {
@@ -49,7 +70,7 @@ export const MessageBubble: React.FC<Props> = ({ message }) => {
       }, 1200);
       window.setTimeout(() => {
         setShowCopiedToast(false);
-      }, 2000);
+      }, 3000);
     } catch (error) {
       try {
         const success = fallbackCopy(text);
@@ -61,7 +82,7 @@ export const MessageBubble: React.FC<Props> = ({ message }) => {
           }, 1200);
           window.setTimeout(() => {
             setShowCopiedToast(false);
-          }, 2000);
+          }, 3000);
           return;
         }
       } catch {
@@ -110,17 +131,18 @@ export const MessageBubble: React.FC<Props> = ({ message }) => {
           }}
           onMouseEnter={() => setHoveredTarget('user')}
           onMouseLeave={() => setHoveredTarget((prev) => (prev === 'user' ? null : prev))}
+          onTouchStart={() => revealTouchCopyButton('user')}
         >
           <button
             type="button"
             onClick={() => handleCopy(message.user_query, 'user')}
             style={{
               ...copyButtonStyle,
-              opacity: copiedTarget === 'user' || hoveredTarget === 'user' || isTouchDevice ? 1 : 0,
+              opacity: copiedTarget === 'user' || hoveredTarget === 'user' ? 1 : 0,
             }}
             aria-label="Copy user message"
             title="Copy"
-            onTouchStart={() => setHoveredTarget('user')}
+            onTouchStart={() => revealTouchCopyButton('user')}
             onMouseEnter={(e) => {
               e.currentTarget.style.background =
                 'linear-gradient(180deg, rgba(255,255,255,0.24) 0%, rgba(255,255,255,0.12) 100%)';
@@ -187,17 +209,18 @@ export const MessageBubble: React.FC<Props> = ({ message }) => {
             }}
             onMouseEnter={() => setHoveredTarget('assistant')}
             onMouseLeave={() => setHoveredTarget((prev) => (prev === 'assistant' ? null : prev))}
+            onTouchStart={() => revealTouchCopyButton('assistant')}
           >
             <button
               type="button"
               onClick={() => handleCopy(message.response, 'assistant')}
               style={{
                 ...copyButtonStyle,
-                opacity: copiedTarget === 'assistant' || hoveredTarget === 'assistant' || isTouchDevice ? 1 : 0,
+                opacity: copiedTarget === 'assistant' || hoveredTarget === 'assistant' ? 1 : 0,
               }}
               aria-label="Copy AI message"
               title="Copy"
-              onTouchStart={() => setHoveredTarget('assistant')}
+              onTouchStart={() => revealTouchCopyButton('assistant')}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background =
                   'linear-gradient(180deg, rgba(255,255,255,0.24) 0%, rgba(255,255,255,0.12) 100%)';
