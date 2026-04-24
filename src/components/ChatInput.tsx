@@ -94,7 +94,7 @@ export const ChatInput: React.FC<Props> = ({ onSendMessage, isLoading }) => {
             alignItems: 'center',
             gap: '6px',
             padding: '0 2px',
-            marginBottom: '4px',
+            marginBottom: '7px',
             cursor: isLoading ? 'default' : 'pointer',
             color: useInternet ? 'var(--accent)' : 'var(--text-secondary)',
             opacity: isLoading ? 0.6 : 1,
