@@ -177,7 +177,7 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
   // -----------------------------------------------------------------------
   // Send message — submits to backend, registers background polling
   // -----------------------------------------------------------------------
-  const handleSendMessage = async (query: string) => {
+  const handleSendMessage = async (query: string, useInternet: boolean) => {
     if (!conversationId) return;
 
     const tempMessage: Message = {
@@ -192,7 +192,7 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
     setIsAILoading(true);
 
     try {
-      const accepted = await submitQuestion(conversationId, query);
+      const accepted = await submitQuestion(conversationId, query, useInternet);
       startTaskPolling(accepted.task_id, conversationId, query, tempMessage.id);
     } catch (error) {
       console.error('Error sending message:', error);

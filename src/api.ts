@@ -213,7 +213,11 @@ export async function getMessages(conversationId: number, startRow: number, endR
  * Submit a question for background processing.
  * Returns immediately with a task_id (HTTP 202 Accepted).
  */
-export async function submitQuestion(conversationId: number, query: string): Promise<AskAcceptedResponse> {
+export async function submitQuestion(
+  conversationId: number,
+  query: string,
+  useInternet: boolean
+): Promise<AskAcceptedResponse> {
   const response = await fetch(`${BASE_URL}/conversations/ask`, {
     method: 'POST',
     headers: {
@@ -223,6 +227,7 @@ export async function submitQuestion(conversationId: number, query: string): Pro
       conversation_id: conversationId,
       query,
       max_tokens: 1000,
+      use_internet: useInternet,
     }),
   });
   if (!response.ok) {

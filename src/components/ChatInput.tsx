@@ -1,13 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, Globe } from 'lucide-react';
 
 interface Props {
-  onSendMessage: (query: string) => void;
+  onSendMessage: (query: string, useInternet: boolean) => void;
   isLoading: boolean;
 }
 
 export const ChatInput: React.FC<Props> = ({ onSendMessage, isLoading }) => {
   const [query, setQuery] = useState('');
+  const [useInternet, setUseInternet] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -20,7 +21,7 @@ export const ChatInput: React.FC<Props> = ({ onSendMessage, isLoading }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim() && !isLoading) {
-      onSendMessage(query.trim());
+      onSendMessage(query.trim(), useInternet);
       setQuery('');
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
@@ -79,6 +80,64 @@ export const ChatInput: React.FC<Props> = ({ onSendMessage, isLoading }) => {
             maxHeight: '140px',
           }}
         />
+        <button
+          type="button"
+          onClick={() => setUseInternet((prev) => !prev)}
+          aria-pressed={useInternet}
+          aria-label={`Web search ${useInternet ? 'enabled' : 'disabled'}`}
+          title="Allow internet search for this message"
+          disabled={isLoading}
+          style={{
+            border: 'none',
+            background: 'transparent',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '0 2px',
+            marginBottom: '4px',
+            cursor: isLoading ? 'default' : 'pointer',
+            color: useInternet ? 'var(--accent)' : 'var(--text-secondary)',
+            opacity: isLoading ? 0.6 : 1,
+          }}
+        >
+          <Globe size={14} strokeWidth={2.2} />
+          <span
+            style={{
+              fontSize: '0.76rem',
+              fontWeight: 500,
+              letterSpacing: '-0.01em',
+              userSelect: 'none',
+            }}
+          >
+            Web
+          </span>
+          <span
+            style={{
+              width: '30px',
+              height: '18px',
+              borderRadius: '999px',
+              background: useInternet ? 'var(--accent)' : 'var(--separator)',
+              position: 'relative',
+              transition: 'background 0.15s ease',
+              boxShadow: 'inset 0 0 0 0.5px var(--input-border)',
+              flexShrink: 0,
+            }}
+          >
+            <span
+              style={{
+                position: 'absolute',
+                top: '2px',
+                left: useInternet ? '14px' : '2px',
+                width: '14px',
+                height: '14px',
+                borderRadius: '50%',
+                background: '#fff',
+                transition: 'left 0.15s ease',
+                boxShadow: '0 1px 2px rgba(0, 0, 0, 0.18)',
+              }}
+            />
+          </span>
+        </button>
         <button
           className="send-btn"
           type="submit"
