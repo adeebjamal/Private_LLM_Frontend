@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { ChatArea } from './components/ChatArea';
 import { NewChatModal } from './components/NewChatModal';
@@ -19,6 +19,16 @@ function App() {
   const [renameTarget, setRenameTarget] = useState<Conversation | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Conversation | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Toast notification state
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastTimerRef = useRef<number | null>(null);
+
+  const showToast = (message: string) => {
+    if (toastTimerRef.current !== null) window.clearTimeout(toastTimerRef.current);
+    setToastMessage(message);
+    toastTimerRef.current = window.setTimeout(() => setToastMessage(null), 3000);
+  };
 
   // Theme logic
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -62,6 +72,7 @@ function App() {
       setActiveConversationId(newConv.id);
       setIsOpenMobile(false);
       setIsModalOpen(false);
+      showToast('Conversation created');
     } catch (error) {
       console.error('Failed to create conversation:', error);
     } finally {
@@ -76,6 +87,7 @@ function App() {
       setConversations((prev) =>
         prev.map((c) => (c.id === renameTarget.id ? { ...c, title: updated.title } : c))
       );
+      showToast('Conversation renamed');
     } catch (error) {
       console.error('Failed to rename conversation:', error);
     }
@@ -96,6 +108,7 @@ function App() {
         return remaining;
       });
       setDeleteTarget(null);
+      showToast('Conversation deleted');
     } catch (error) {
       console.error('Failed to delete conversation:', error);
     } finally {
@@ -145,6 +158,34 @@ function App() {
         onConfirm={handleDeleteConversation}
       />
       
+      {/* Conversation action toast */}
+      {toastMessage && (
+        <div
+          style={{
+            position: 'fixed',
+            left: '50%',
+            bottom: '88px',
+            transform: 'translateX(-50%)',
+            padding: '9px 15px',
+            borderRadius: '999px',
+            background:
+              'linear-gradient(140deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.10) 45%, rgba(255,255,255,0.05) 100%)',
+            border: '1px solid rgba(255,255,255,0.24)',
+            backdropFilter: 'saturate(230%) blur(32px)',
+            WebkitBackdropFilter: 'saturate(230%) blur(32px)',
+            boxShadow:
+              '0 8px 22px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.40), inset 0 -1px 0 rgba(255,255,255,0.08)',
+            color: 'var(--text-primary)',
+            fontSize: '12px',
+            fontWeight: 500,
+            zIndex: 200,
+            pointerEvents: 'none',
+          }}
+        >
+          {toastMessage}
+        </div>
+      )}
+
       {/* Mobile styling specific overrides */}
       <style>
         {`
