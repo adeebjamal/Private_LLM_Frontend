@@ -11,6 +11,12 @@ import { MessageBubble } from './MessageBubble';
 import { ChatInput } from './ChatInput';
 import { Loader2, Bot } from 'lucide-react';
 
+/** Sentinel value the backend writes while the LLM is still generating. */
+const GENERATING_PLACEHOLDER = 'Generating response';
+
+/** Returns true when the response represents a still-pending answer. */
+const isResponsePending = (r: string) => !r || r === GENERATING_PLACEHOLDER;
+
 interface Props {
   conversationId: number | null;
 }
@@ -83,7 +89,18 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
       for (const task of tasks) {
         if (task.status === 'completed' && task.result) {
           setMessages((prev) => {
-            if (prev.some((m) => m.user_query === task.query && m.response)) return prev;
+            // Already have a real response for this query — nothing to do
+            if (prev.some((m) => m.user_query === task.query && !isResponsePending(m.response))) return prev;
+
+            // A pending DB-fetched message exists — update it in-place
+            const pendingIdx = prev.findIndex((m) => m.user_query === task.query && isResponsePending(m.response));
+            if (pendingIdx !== -1) {
+              return prev.map((m, i) =>
+                i === pendingIdx ? { ...m, response: task.result!.response } : m
+              );
+            }
+
+            // No existing message at all — append (shouldn't normally happen)
             return [
               ...prev,
               {
@@ -100,7 +117,9 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
           clearTask(task.taskId);
         } else if (task.status === 'polling') {
           setMessages((prev) => {
-            if (prev.some((m) => m.id === task.tempMessageId)) return prev;
+            // Skip if a message with same tempId OR same query with pending response already exists
+            if (prev.some((m) => m.id === task.tempMessageId
+              || (m.user_query === task.query && isResponsePending(m.response)))) return prev;
             return [
               ...prev,
               {
@@ -115,6 +134,14 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
           setTimeout(() => scrollToBottom(), 100);
         }
       }
+
+      // If any fetched message has the placeholder, activate loading state
+      setMessages((prev) => {
+        if (prev.some((m) => m.response === GENERATING_PLACEHOLDER)) {
+          setIsAILoading(true);
+        }
+        return prev;
+      });
     });
   }, [conversationId, fetchMessages]);
 
@@ -153,9 +180,34 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
 
       // Sync loading state based on active tasks and current message list
       const hasPolling = tasks.some(t => t.status === 'polling');
-      const hasEmptyResponse = messages.some(m => m.response === '');
-      setIsAILoading(hasPolling || hasEmptyResponse);
-    }, 1500);
+      const hasPendingResponse = messages.some(m => isResponsePending(m.response));
+      setIsAILoading(hasPolling || hasPendingResponse);
+
+      // If there are "Generating response" messages but no active polling task
+      // (e.g. after a page refresh), re-fetch messages from the API to check
+      // whether the backend has finished generating.
+      if (hasPendingResponse && !hasPolling) {
+        getMessages(conversationId, 1, PAGE_SIZE).then((resp) => {
+          if (resp.messages && resp.messages.length > 0) {
+            const freshMessages = resp.messages.reverse();
+            setMessages((prev) => {
+              // Merge: update any message whose response changed from placeholder
+              const updatedIds = new Set(freshMessages.map(m => m.id));
+              const merged = prev.map((m) => {
+                if (updatedIds.has(m.id)) {
+                  const fresh = freshMessages.find(fm => fm.id === m.id);
+                  if (fresh && fresh.response !== m.response) {
+                    return { ...m, response: fresh.response };
+                  }
+                }
+                return m;
+              });
+              return merged;
+            });
+          }
+        }).catch(err => console.warn('Re-fetch for pending messages failed:', err));
+      }
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [conversationId, messages]);

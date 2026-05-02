@@ -178,7 +178,7 @@ export const MessageBubble: React.FC<Props> = ({ message }) => {
       </div>
 
       {/* AI Response */}
-      {message.response && (
+      {message.response && message.response !== 'Generating response' && (
         <div className="msg-ai" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-end', gap: '8px' }}>
           <div
             style={{
