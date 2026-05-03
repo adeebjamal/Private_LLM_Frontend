@@ -1,7 +1,29 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 import type { Message } from '../api';
 import { User, Bot, Copy, Check } from 'lucide-react';
+
+/**
+ * Normalise LaTeX delimiters so remark-math can parse them.
+ * Many LLMs (Gemma, Llama, etc.) emit \( \) for inline and \[ \] for display
+ * math, but remark-math only recognises $ and $$.
+ */
+const preprocessLatex = (content: string): string => {
+  // Replace display math \[...\] → $$...$$  (do this first to avoid conflicts)
+  const blockProcessed = content.replace(
+    /\\\[([\s\S]*?)\\\]/g,
+    (_match, inner) => `$$${inner}$$`
+  );
+  // Replace inline math \(...\) → $...$
+  const inlineProcessed = blockProcessed.replace(
+    /\\\(([\s\S]*?)\\\)/g,
+    (_match, inner) => `$${inner}$`
+  );
+  return inlineProcessed;
+};
 
 interface Props {
   message: Message;
@@ -236,7 +258,7 @@ export const MessageBubble: React.FC<Props> = ({ message }) => {
             >
               {copiedTarget === 'assistant' ? <Check size={12} strokeWidth={2.3} /> : <Copy size={12} strokeWidth={2.1} />}
             </button>
-            <ReactMarkdown>{message.response}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{preprocessLatex(message.response)}</ReactMarkdown>
           </div>
         </div>
       )}

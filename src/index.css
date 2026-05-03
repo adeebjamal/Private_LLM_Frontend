@@ -198,6 +198,31 @@ body {
   color: var(--text-secondary);
 }
 
+/* ── KaTeX Math Rendering ── */
+/* Display (block) math — centered with subtle background */
+.markdown-body .katex-display {
+  margin: 1em 0;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+[data-theme="dark"] .markdown-body .katex-display {
+  background: rgba(255, 255, 255, 0.05);
+}
+/* Inline math — blend naturally with text */
+.markdown-body .katex {
+  font-size: 1.05em;
+}
+/* Ensure math text inherits bubble color */
+.markdown-body .katex .katex-mathml {
+  /* Screen-reader only; already hidden by KaTeX CSS */
+}
+.markdown-body .katex .katex-html {
+  color: inherit;
+}
+
 /* Animations */
 @keyframes spin {
   100% { transform: rotate(360deg); }
