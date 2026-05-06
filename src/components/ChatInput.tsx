@@ -45,6 +45,24 @@ export const ChatInput: React.FC<Props> = ({ onSendMessage, isLoading }) => {
         padding: '12px 16px 16px',
       }}
     >
+      {/* Naruto runner — only visible in anime theme via CSS */}
+      <div className="naruto-runner" aria-hidden="true">
+        <div className="naruto-shuriken">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M12,2 L14,10 L22,12 L14,14 L12,22 L10,14 L2,12 L10,10 Z"
+              fill="#37474F"
+              stroke="#212121"
+              strokeWidth="0.5"
+            />
+            <circle cx="12" cy="12" r="2" fill="#FF6B1A" />
+          </svg>
+        </div>
+        <div className="naruto-figure">
+          <img src="/naruto-runner.png?v=2" alt="" draggable={false} />
+        </div>
+      </div>
+
       <div
         style={{
           display: 'flex',
@@ -94,7 +112,7 @@ export const ChatInput: React.FC<Props> = ({ onSendMessage, isLoading }) => {
             alignItems: 'center',
             gap: '6px',
             padding: '0 2px',
-            marginBottom: '7px',
+            marginBottom: '8px',
             cursor: isLoading ? 'default' : 'pointer',
             color: useInternet ? 'var(--accent)' : 'var(--text-secondary)',
             opacity: isLoading ? 0.6 : 1,

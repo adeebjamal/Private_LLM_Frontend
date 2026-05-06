@@ -31,9 +31,9 @@ function App() {
   };
 
   // Theme logic
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+  const [theme, setTheme] = useState<'light' | 'dark' | 'cyberpunk' | 'anime'>(() => {
     const saved = localStorage.getItem('theme');
-    if (saved === 'dark' || saved === 'light') return saved;
+    if (saved === 'dark' || saved === 'light' || saved === 'cyberpunk' || saved === 'anime') return saved;
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
 
@@ -43,7 +43,12 @@ function App() {
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+    setTheme((prev) => {
+      if (prev === 'light') return 'dark';
+      if (prev === 'dark') return 'cyberpunk';
+      if (prev === 'cyberpunk') return 'anime';
+      return 'light';
+    });
   };
 
   // Fetch initial conversations
@@ -185,6 +190,21 @@ function App() {
           {toastMessage}
         </div>
       )}
+
+      {/* Anime theme — falling sakura petals (CSS-hidden in other themes) */}
+      <div className="sakura-overlay" aria-hidden="true">
+        {Array.from({ length: 14 }).map((_, i) => (
+          <span
+            key={i}
+            className="sakura"
+            style={{
+              left: `${(i * 7.3) % 100}%`,
+              animationDuration: `${9 + (i % 5) * 1.6}s`,
+              animationDelay: `${(i * 0.85) % 9}s`,
+            }}
+          />
+        ))}
+      </div>
 
       {/* Mobile styling specific overrides */}
       <style>

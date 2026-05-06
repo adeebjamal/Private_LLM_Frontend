@@ -11,7 +11,7 @@ interface Props {
   onRenameClick: (conv: Conversation) => void;
   onDeleteConversation: (conv: Conversation) => void;
   isCreating: boolean;
-  theme: 'light' | 'dark';
+  theme: 'light' | 'dark' | 'cyberpunk' | 'anime';
   toggleTheme: () => void;
   isOpenMobile: boolean;
   setIsOpenMobile: (isOpen: boolean) => void;

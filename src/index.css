@@ -76,6 +76,82 @@
   --code-block-bg: #1a1a1c;
 }
 
+[data-theme="cyberpunk"] {
+  /* Cyberpunk 2077 Theme — neon yellow + cyan + hot magenta on deep night */
+  --bg-primary: #07070d;
+  --bg-secondary: #0e0e18;
+  --sidebar-bg: rgba(11, 11, 22, 0.96);
+  --sidebar-bg-solid: #0b0b16;
+  --sidebar-active: rgba(252, 238, 12, 0.10);
+  --sidebar-hover: rgba(0, 240, 255, 0.06);
+  --sidebar-border: rgba(252, 238, 12, 0.22);
+  --content-bg: #0a0a14;
+  --content-border: rgba(0, 240, 255, 0.10);
+  --text-primary: #f7f7fa;
+  --text-secondary: #00f0ff;
+  --text-tertiary: rgba(0, 240, 255, 0.55);
+  --accent: #fcee0c;
+  --accent-hover: #ffd700;
+  --bubble-user-bg: #ff003c;
+  --bubble-user-text: #ffffff;
+  --bubble-ai-bg: rgba(0, 240, 255, 0.10);
+  --bubble-ai-text: #f7f7fa;
+  --input-bg: rgba(0, 240, 255, 0.05);
+  --input-border: rgba(252, 238, 12, 0.32);
+  --input-focus: #fcee0c;
+  --separator: rgba(252, 238, 12, 0.14);
+  --modal-bg: rgba(11, 11, 22, 0.97);
+  --modal-bg-solid: #0b0b16;
+  --menu-bg: rgba(14, 14, 24, 0.99);
+  --menu-bg-solid: #0e0e18;
+  --menu-border: rgba(252, 238, 12, 0.32);
+  --shadow-sm: 0 0 8px rgba(252, 238, 12, 0.18);
+  --shadow-md: 0 0 20px rgba(0, 240, 255, 0.20), 0 4px 16px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 0 42px rgba(252, 238, 12, 0.22), 0 24px 48px rgba(0, 0, 0, 0.7);
+  --scrollbar-thumb: rgba(252, 238, 12, 0.32);
+  --scrollbar-hover: rgba(252, 238, 12, 0.55);
+  --code-bg: rgba(0, 240, 255, 0.10);
+  --code-block-bg: #06060c;
+}
+
+[data-theme="anime"] {
+  /* Anime Theme — Naruto-inspired warm orange + sakura pink accents */
+  --bg-primary: #fff4eb;
+  --bg-secondary: #ffffff;
+  --sidebar-bg: rgba(255, 244, 235, 0.96);
+  --sidebar-bg-solid: #fff4eb;
+  --sidebar-active: rgba(255, 107, 26, 0.12);
+  --sidebar-hover: rgba(255, 107, 26, 0.06);
+  --sidebar-border: rgba(255, 107, 26, 0.20);
+  --content-bg: #ffffff;
+  --content-border: rgba(255, 107, 26, 0.10);
+  --text-primary: #2c1810;
+  --text-secondary: #8b5a3c;
+  --text-tertiary: #c49a7a;
+  --accent: #ff6b1a;
+  --accent-hover: #e85d0f;
+  --bubble-user-bg: #ff6b1a;
+  --bubble-user-text: #ffffff;
+  --bubble-ai-bg: #ffeddb;
+  --bubble-ai-text: #2c1810;
+  --input-bg: #ffffff;
+  --input-border: rgba(255, 107, 26, 0.30);
+  --input-focus: #ff6b1a;
+  --separator: rgba(255, 107, 26, 0.14);
+  --modal-bg: rgba(255, 255, 255, 0.97);
+  --modal-bg-solid: #ffffff;
+  --menu-bg: rgba(255, 255, 255, 0.99);
+  --menu-bg-solid: #ffffff;
+  --menu-border: rgba(255, 107, 26, 0.25);
+  --shadow-sm: 0 2px 6px rgba(255, 107, 26, 0.10);
+  --shadow-md: 0 4px 16px rgba(255, 107, 26, 0.15);
+  --shadow-lg: 0 24px 48px rgba(255, 107, 26, 0.20);
+  --scrollbar-thumb: rgba(255, 107, 26, 0.30);
+  --scrollbar-hover: rgba(255, 107, 26, 0.55);
+  --code-bg: #ffeddb;
+  --code-block-bg: #2c1810;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -211,6 +287,12 @@ body {
 [data-theme="dark"] .markdown-body .katex-display {
   background: rgba(255, 255, 255, 0.05);
 }
+[data-theme="cyberpunk"] .markdown-body .katex-display {
+  background: rgba(0, 240, 255, 0.06);
+}
+[data-theme="anime"] .markdown-body .katex-display {
+  background: rgba(255, 107, 26, 0.06);
+}
 /* Inline math — blend naturally with text */
 .markdown-body .katex {
   font-size: 1.05em;
@@ -312,3 +394,92 @@ body {
 }
 .thinking-dot:nth-child(2) { animation-delay: 0.15s; }
 .thinking-dot:nth-child(3) { animation-delay: 0.3s; }
+
+/* ── Anime theme: Naruto runner + sakura petals (only visible in anime theme) ── */
+.naruto-runner {
+  display: none;
+  position: relative;
+  height: 50px;
+  margin: 0 4px 4px;
+  overflow: hidden;
+  pointer-events: none;
+}
+[data-theme="anime"] .naruto-runner {
+  display: block;
+}
+.naruto-figure {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 70px;
+  height: auto;
+  animation: narutoRun 6s linear infinite, narutoBob 0.32s ease-in-out infinite;
+}
+.naruto-figure img {
+  width: 100%;
+  height: auto;
+  display: block;
+  -webkit-user-drag: none;
+  user-select: none;
+  filter: drop-shadow(0 2px 3px rgba(255, 107, 26, 0.25));
+}
+.naruto-shuriken {
+  position: absolute;
+  bottom: 14px;
+  right: 26%;
+  width: 16px;
+  height: 16px;
+  opacity: 0.75;
+  animation: shurikenSpin 1.4s linear infinite;
+}
+.naruto-shuriken svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+@keyframes narutoRun {
+  from { left: -60px; }
+  to   { left: 100%; }
+}
+@keyframes narutoBob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
+}
+@keyframes shurikenSpin {
+  to { transform: rotate(360deg); }
+}
+
+.sakura-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+[data-theme="anime"] .sakura-overlay {
+  display: block;
+}
+.sakura {
+  position: absolute;
+  top: -24px;
+  width: 12px;
+  height: 12px;
+  background: radial-gradient(ellipse at 30% 30%, #ffe4ee 0%, #ffb7c5 55%, #ff8fab 100%);
+  border-radius: 60% 40% 70% 30% / 50% 60% 40% 50%;
+  opacity: 0;
+  animation: sakuraFall linear infinite;
+  filter: drop-shadow(0 1px 2px rgba(255, 143, 171, 0.35));
+}
+@keyframes sakuraFall {
+  0% {
+    transform: translate(0, -24px) rotate(0deg);
+    opacity: 0;
+  }
+  10% { opacity: 0.65; }
+  90% { opacity: 0.65; }
+  100% {
+    transform: translate(80px, calc(100vh + 30px)) rotate(540deg);
+    opacity: 0;
+  }
+}

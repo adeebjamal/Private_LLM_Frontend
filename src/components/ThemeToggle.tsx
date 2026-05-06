@@ -1,10 +1,17 @@
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sparkles, Sun, Zap } from 'lucide-react';
 import React from 'react';
 
 interface Props {
-  theme: 'light' | 'dark';
+  theme: 'light' | 'dark' | 'cyberpunk' | 'anime';
   toggleTheme: () => void;
 }
+
+const NEXT_THEME_LABEL: Record<Props['theme'], string> = {
+  light: 'Switch to dark theme',
+  dark: 'Switch to Cyberpunk 2077 theme',
+  cyberpunk: 'Switch to anime theme',
+  anime: 'Switch to light theme',
+};
 
 export const ThemeToggle: React.FC<Props> = ({ theme, toggleTheme }) => {
   return (
@@ -30,9 +37,13 @@ export const ThemeToggle: React.FC<Props> = ({ theme, toggleTheme }) => {
         e.currentTarget.style.background = 'transparent';
         e.currentTarget.style.color = 'var(--text-tertiary)';
       }}
-      aria-label="Toggle Theme"
+      aria-label={NEXT_THEME_LABEL[theme]}
+      title={NEXT_THEME_LABEL[theme]}
     >
-      {theme === 'dark' ? <Sun size={16} strokeWidth={1.8} /> : <Moon size={16} strokeWidth={1.8} />}
+      {theme === 'light' && <Moon size={16} strokeWidth={1.8} />}
+      {theme === 'dark' && <Zap size={16} strokeWidth={1.8} />}
+      {theme === 'cyberpunk' && <Sparkles size={16} strokeWidth={1.8} />}
+      {theme === 'anime' && <Sun size={16} strokeWidth={1.8} />}
     </button>
   );
 };
