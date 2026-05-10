@@ -174,11 +174,8 @@ export async function getConversations(): Promise<Conversation[]> {
     throw new Error('Failed to fetch conversations');
   }
   const data = await response.json();
-  const conversations: Conversation[] = data.conversations || [];
-  // Sort by updated_at descending so the most recently active conversation appears first
-  return conversations.sort(
-    (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-  );
+  // Backend returns conversations already sorted by updated_at DESC
+  return data.conversations || [];
 }
 
 export async function createConversation(title: string): Promise<Conversation> {
