@@ -56,7 +56,7 @@ function App() {
     const fetchConvos = async () => {
       try {
         const data = await getConversations();
-        setConversations(data.sort((a, b) => b.id - a.id));
+        setConversations(data);
         if (data.length > 0 && !activeConversationId) {
           setActiveConversationId(data[0].id);
         }
