@@ -3,7 +3,7 @@ const BASE_URL = 'https://adeebjamal-private-ai-backend.hf.space';
 export interface Conversation {
   id: number;
   title: string;
-  created_at: string;
+  updated_at: string;
   message_count?: number;
 }
 
@@ -174,7 +174,11 @@ export async function getConversations(): Promise<Conversation[]> {
     throw new Error('Failed to fetch conversations');
   }
   const data = await response.json();
-  return data.conversations || [];
+  const conversations: Conversation[] = data.conversations || [];
+  // Sort by updated_at descending so the most recently active conversation appears first
+  return conversations.sort(
+    (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+  );
 }
 
 export async function createConversation(title: string): Promise<Conversation> {
