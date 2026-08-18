@@ -35,7 +35,9 @@ export const ChatArea: React.FC<Props> = ({ conversationId }) => {
 
   const fetchMessages = useCallback(
     async (startRow: number, isInitial: boolean = false) => {
-      if (!conversationId) return;
+      if (!conversationId) {
+        return;
+      }
 
       if (isInitial) setIsInitialLoading(true);
       else setIsFetchingHistory(true);
